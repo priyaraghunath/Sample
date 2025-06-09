@@ -1,34 +1,27 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 4.16"
-    }
-  }
-  required_version = ">= 1.2.0"
-}
-
 provider "aws" {
   region = "us-west-2"
 }
 
-
 resource "aws_s3_bucket" "example_bucket" {
-  bucket = "my-unique-bucket-name-20250609" 
+  bucket = "my-ecomweb-bucket-name-20250609"
   tags = {
     Name        = "ExampleS3Bucket"
     Environment = "Production"
   }
 }
 
-resource "aws_s3_bucket_acl" "example_bucket_acl" {
-  bucket = aws_s3_bucket.example_bucket.id
-  acl    = "private"
+resource "aws_s3_bucket_public_access_block" "allow_public_policy" {
+  bucket                  = aws_s3_bucket.example_bucket.id
+  block_public_acls       = false
+  ignore_public_acls      = false
+  block_public_policy     = false
+  restrict_public_buckets = false
+
+  depends_on = [aws_s3_bucket.example_bucket]
 }
 
 resource "aws_s3_bucket_policy" "example_bucket_policy" {
   bucket = aws_s3_bucket.example_bucket.id
-
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -41,8 +34,8 @@ resource "aws_s3_bucket_policy" "example_bucket_policy" {
       }
     ]
   })
+  depends_on = [aws_s3_bucket_public_access_block.allow_public_policy]
 }
-
 
 resource "aws_iam_role" "ec2_role" {
   name = "ec2_s3_access_role"
@@ -84,12 +77,11 @@ resource "aws_iam_instance_profile" "ec2_profile" {
 }
 
 resource "aws_instance" "example_server" {
-  ami                  = "ami-0418306302097dbff"
+  ami                  = "ami-0418306302097dbff" # Replace with a valid AMI for us-west-2
   instance_type        = "t2.micro"
   iam_instance_profile = aws_iam_instance_profile.ec2_profile.name
 
   tags = {
-    Name = "ExampleInstance"
+    Name = "E-comwebInstance"
   }
 }
-
