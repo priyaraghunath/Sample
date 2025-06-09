@@ -25,7 +25,7 @@ phases:
     commands:
       - echo Applying Terraform changes...
       # Uncomment the next line for automatic apply (use with caution in production)
-      # - terraform apply -auto-approve tfplan
+      - terraform apply -auto-approve tfplan
       - echo Terraform infrastructure deployment complete.
 artifacts:
   files:
