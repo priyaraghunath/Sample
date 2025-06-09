@@ -9,25 +9,23 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-west-2" 
+  region = "us-west-2"
 }
 
-# S3 Bucket
+
 resource "aws_s3_bucket" "example_bucket" {
-  bucket = "my-ecomweb-bucket-name-20250609" 
+  bucket = "my-unique-bucket-name-20250609" 
   tags = {
     Name        = "ExampleS3Bucket"
     Environment = "Production"
   }
 }
 
-# S3 Bucket ACL (recommended way)
 resource "aws_s3_bucket_acl" "example_bucket_acl" {
   bucket = aws_s3_bucket.example_bucket.id
   acl    = "private"
 }
 
-# S3 Bucket Policy (public read access to all objects)
 resource "aws_s3_bucket_policy" "example_bucket_policy" {
   bucket = aws_s3_bucket.example_bucket.id
 
@@ -45,7 +43,7 @@ resource "aws_s3_bucket_policy" "example_bucket_policy" {
   })
 }
 
-# IAM Role for EC2 to access S3 (optional, but best practice)
+
 resource "aws_iam_role" "ec2_role" {
   name = "ec2_s3_access_role"
   assume_role_policy = jsonencode({
@@ -85,9 +83,8 @@ resource "aws_iam_instance_profile" "ec2_profile" {
   role = aws_iam_role.ec2_role.name
 }
 
-# EC2 Instance
 resource "aws_instance" "example_server" {
-  ami                  = "ami-0418306302097dbff" # Replace with a valid AMI for your region
+  ami                  = "ami-0418306302097dbff"
   instance_type        = "t2.micro"
   iam_instance_profile = aws_iam_instance_profile.ec2_profile.name
 
@@ -95,3 +92,4 @@ resource "aws_instance" "example_server" {
     Name = "ExampleInstance"
   }
 }
+
