@@ -4,12 +4,9 @@ phases:
   install:
     runtime-versions:
       python: 3.11
-      # Add other runtimes if needed
     commands:
-      - echo Installing Terraform...
       - curl -o terraform.zip https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip
-      - unzip terraform.zip
-      - mv terraform /usr/local/bin/
+      - unzip terraform.zip && mv terraform /usr/local/bin/
       - terraform --version
   pre_build:
     commands:
@@ -17,16 +14,11 @@ phases:
       - terraform init
   build:
     commands:
-      - echo Validating Terraform...
       - terraform validate
-      - echo Planning Terraform changes...
       - terraform plan -out=tfplan
   post_build:
     commands:
-      - echo Applying Terraform changes...
-      # Uncomment the next line for automatic apply (use with caution in production)
-      - terraform apply -auto-approve tfplan
-      - echo Terraform infrastructure deployment complete.
+      - terraform apply -auto-approve tfplan  
 artifacts:
   files:
     - '**/*'
