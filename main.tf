@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "us-west-1"
+  region = "us-west-2"
 }
 
 resource "aws_s3_bucket" "example_bucket" {
@@ -77,7 +77,7 @@ resource "aws_iam_instance_profile" "ec2_profile" {
 }
 
 resource "aws_instance" "example_server" {
-  ami                  = "aami-00ddc330f6182b5cb" # Replace with a valid AMI for us-west-2
+  ami                  = "ami-0418306302097dbff" # Replace with a valid AMI for us-west-2
   instance_type        = "t2.micro"
   iam_instance_profile = aws_iam_instance_profile.ec2_profile.name
 
