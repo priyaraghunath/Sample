@@ -12,7 +12,6 @@ phases:
       - unzip terraform.zip
       - mv terraform /usr/local/bin/
       - terraform version
-      - aws sts get-caller-identity
 
   pre_build:
     commands:
