@@ -12,22 +12,17 @@ provider "aws" {
   region = "us-west-2"
 }
 
-# Random ID for unique suffix
+# Random suffix for bucket and IAM role names to avoid conflicts
 resource "random_id" "suffix" {
   byte_length = 4
 }
 
-# Create S3 Bucket with unique name
+# Create a unique S3 bucket
 resource "aws_s3_bucket" "example_bucket" {
-  bucket = "my-ecomweb-bucket-${random_id.suffix.hex}"
-
-  tags = {
-    Name        = "ExampleS3Bucket"
-    Environment = "Production"
-  }
+  bucket = "my-unique-bucket-${random_id.suffix.hex}"
 }
 
-# Allow public policy on S3 bucket
+# Allow public access policy (if you want public-read)
 resource "aws_s3_bucket_public_access_block" "allow_public_policy" {
   bucket                  = aws_s3_bucket.example_bucket.id
   block_public_acls       = false
@@ -38,7 +33,6 @@ resource "aws_s3_bucket_public_access_block" "allow_public_policy" {
   depends_on = [aws_s3_bucket.example_bucket]
 }
 
-# Public access policy
 resource "aws_s3_bucket_policy" "example_bucket_policy" {
   bucket = aws_s3_bucket.example_bucket.id
 
@@ -58,7 +52,7 @@ resource "aws_s3_bucket_policy" "example_bucket_policy" {
   depends_on = [aws_s3_bucket_public_access_block.allow_public_policy]
 }
 
-# IAM Role with dynamic name
+# IAM Role for EC2
 resource "aws_iam_role" "ec2_role" {
   name = "ec2_s3_access_role_${random_id.suffix.hex}"
 
@@ -74,10 +68,10 @@ resource "aws_iam_role" "ec2_role" {
   })
 }
 
-# IAM Policy document for S3 access
+# S3 access policy document
 data "aws_iam_policy_document" "s3_policy" {
   statement {
-    actions   = ["s3:*"]
+    actions = ["s3:*"]
     resources = [
       "arn:aws:s3:::${aws_s3_bucket.example_bucket.bucket}",
       "arn:aws:s3:::${aws_s3_bucket.example_bucket.bucket}/*"
@@ -85,31 +79,36 @@ data "aws_iam_policy_document" "s3_policy" {
   }
 }
 
-# Create IAM policy for S3 access
+# Attach policy to IAM role
 resource "aws_iam_policy" "s3_access" {
   name   = "ec2_s3_full_access_${random_id.suffix.hex}"
   policy = data.aws_iam_policy_document.s3_policy.json
 }
 
-# Attach policy to role
 resource "aws_iam_role_policy_attachment" "ec2_attach_s3" {
   role       = aws_iam_role.ec2_role.name
   policy_arn = aws_iam_policy.s3_access.arn
 }
 
-# Instance profile
+# IAM instance profile
 resource "aws_iam_instance_profile" "ec2_profile" {
   name = "ec2_instance_profile_${random_id.suffix.hex}"
   role = aws_iam_role.ec2_role.name
 }
 
-# Launch EC2 instance with S3 role
-resource "aws_instance" "example_server" {
-  ami                  = "ami-0418306302097dbff" # us-west-2 Amazon Linux 2 AMI
-  instance_type        = "t2.micro"
-  iam_instance_profile = aws_iam_instance_profile.ec2_profile.name
+# Use default VPC and subnet
+data "aws_vpc" "default" {
+  default = true
+}
 
-  tags = {
-    Name = "E-comwebInstance"
-  }
+data "aws_subnet_ids" "default" {
+  vpc_id = data.aws_vpc.default.id
+}
+
+# Launch EC2 instance
+resource "aws_instance" "example_server" {
+  ami                    = "ami-0418306302097dbff" # Update if needed
+  instance_type          = "t2.micro"
+  subnet_id              = tolist(data.aws_subnet_ids.default.ids)[0]
+  iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
 }
